@@ -231,7 +231,7 @@ if __name__ == "__main__":
     
     # Define folders
     # Option 1: Relative paths (folders in same directory as script)
-    input_folder = "testing_input_pdfs"
+    input_folder = "input_pdfs"
     output_folder = "highlighted_pdfs"
     
     # Option 2: Absolute paths (specify full path to folders)
