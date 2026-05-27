@@ -80,42 +80,6 @@ def highlight_keywords_in_pdf(input_pdf, output_pdf, keywords, highlight_color=(
                     highlight.set_colors(stroke=highlight_color)
                     highlight.update()
                     total_highlights += 1
-                    
-
-                    # try:
-                    #     next_box = pymupdf.Rect(boxes[box_no+1])
-                    #     next_box = pymupdf.Rect(next_box[0], next_box[1]+box_shrink, next_box[2], next_box[3]-box_shrink)
-
-                    #     if is_chinese_char(word):
-                    #         word = word + '\n' + page.get_textbox(next_box)
-                    #     else:
-                    #         word = word + page.get_textbox(next_box)
-                    # except IndexError:
-                    #     # there is a problem with page.search_for where when the lines are really close together,
-                    #     # the box isn't precisely defined, so it includes words from other lines. In a very rare
-                    #     # case, it happened to capture a word at a lower line that ends with a hyphen, which leads
-                    #     # to an IndexError. I have no idea if there are other cases which would lead to IndexError.
-                    #     truncated = False
-
-                # if keyword == word:
-                #     # Add highlight annotation
-                #     highlight = page.add_highlight_annot(box)
-
-                #     if truncated:
-                #         highlight = page.add_highlight_annot(boxes[box_no+1])
-                        
-                #     highlight.set_colors(stroke=highlight_color)
-                #     highlight.update()
-                #     total_highlights += 1
-                # highlight = page.add_highlight_annot(box)
-
-                # if truncated:
-                #     highlight = page.add_highlight_annot(boxes[box_no+1])
-                    
-                    # highlight.set_colors(stroke=highlight_color)
-                    # highlight.update()
-                    # total_highlights += 1
-
             
     # Save the modified PDF
     doc.save(output_pdf)
