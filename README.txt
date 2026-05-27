@@ -11,4 +11,4 @@ meaning the function will sometimes return adjacent characters, including punctu
 - To deal with this, the box obtained from Page.search_for(needle) is made smaller by an arbitrary value {box_shrink}.
 - Fow now, only the height is made smaller so that Page.get_textbox(Rect) doesn't get text from adjacent lines. The width could possibly be made smaller
 so that adjacent characters do not get extracted as well. 
-- Note that the box is only made smaller for Page.get_textbox(Rect). The original box obtained from Page.search_for(needle) is used for highlighting. 
+- Note that the box is only made smaller for Page.get_textbox(Rect). The original box obtained from Page.search_for(needle) is used for highlighting.
