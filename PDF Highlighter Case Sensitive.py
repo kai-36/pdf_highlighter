@@ -34,8 +34,8 @@ def highlight_keywords_in_pdf(input_pdf, output_pdf, keywords, highlight_color=(
                     truncated = False
                     continue
                 
-                box = pymupdf.Rect(box[0], box[1]+box_shrink, box[2], box[3]-box_shrink)  
-                word = page.get_textbox(box)
+                shrunk_box = pymupdf.Rect(box[0], box[1]+box_shrink, box[2], box[3]-box_shrink)  
+                word = page.get_textbox(shrunk_box)
 
                 # the hyphen is only able to capture truncated english words, but not Chinese
                 """
@@ -59,23 +59,21 @@ def highlight_keywords_in_pdf(input_pdf, output_pdf, keywords, highlight_color=(
                 if truncated:
                     
                     next_box = boxes[box_no+1]
-                    next_box = pymupdf.Rect(next_box[0], next_box[1]+box_shrink, next_box[2], next_box[3]-box_shrink)
-                    next_word = page.get_textbox(next_box).strip(common_punctuation)
+                    shrunk_next_box = pymupdf.Rect(next_box[0], next_box[1]+box_shrink, next_box[2], next_box[3]-box_shrink)
+                    next_word = page.get_textbox(shrunk_next_box).strip(common_punctuation)
 
                     if is_chinese_char(word):
                         word = word + '\n' + next_word
                     else:
                         word = word + next_word
-                    
-                    
-                if word == keyword:
+
+                if keyword in word:
 
                     highlight = page.add_highlight_annot(box)
                 
                     if truncated:
                         
                         next_box = boxes[box_no+1]
-                        next_box = pymupdf.Rect(next_box[0], next_box[1]+box_shrink, next_box[2], next_box[3]-box_shrink)
 
                         highlight = page.add_highlight_annot(next_box)
 
@@ -233,7 +231,7 @@ if __name__ == "__main__":
     
     # Define folders
     # Option 1: Relative paths (folders in same directory as script)
-    input_folder = "input_pdfs"
+    input_folder = "testing_input_pdfs"
     output_folder = "highlighted_pdfs"
     
     # Option 2: Absolute paths (specify full path to folders)
