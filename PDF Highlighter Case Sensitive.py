@@ -1,6 +1,7 @@
 import pymupdf
 import os
 import shutil
+import sys
 from pathlib import Path
 
 def highlight_keywords_in_pdf(input_pdf, output_pdf, keywords, highlight_color=(1, 1, 0)):
@@ -144,6 +145,28 @@ def process_multiple_pdfs(input_folder, output_folder, keywords, highlight_color
     
     print(f"\nProcessing complete! Highlighted PDFs saved to: {output_folder}")
 
+def get_input_folder():
+    # 1. Check if user provided an argument
+    if len(sys.argv) != 2:
+        print("Error: Please provide the input folder path.")
+        print("Usage: python script.py <input_folder>")
+        sys.exit(1)
+
+    folder = Path(sys.argv[1])
+
+    # 2. Check if path exists
+    if not folder.exists():
+        print(f"Error: Path does not exist -> {folder}")
+        sys.exit(1)
+
+    # 3. Check if it's a folder
+    if not folder.is_dir():
+        print(f"Error: Path is not a folder -> {folder}")
+        sys.exit(1)
+
+    return folder
+
+
 # Example usage
 if __name__ == "__main__":
     print(pymupdf.__doc__)  # Print the docstring of the pymupdf module to check version and info
@@ -191,11 +214,10 @@ if __name__ == "__main__":
         "管\n大"
     ]
     
-    
-    
+    input_folder =  get_input_folder()
     # Define folders
     # Option 1: Relative paths (folders in same directory as script)
-    input_folder = "input_pdfs"
+    # input_folder = "input_pdfs"
     output_folder = "highlighted_pdfs"
     
     # Option 2: Absolute paths (specify full path to folders)
