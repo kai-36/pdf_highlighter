@@ -1,3 +1,5 @@
 *.pdf
 testing.py
 random.py
+*_pdfs/
+data-env/
