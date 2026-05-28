@@ -166,58 +166,76 @@ def get_input_folder():
 
     return folder
 
+def load_keywords(file_path):
+    path = Path(file_path)
+
+    if not path.exists():
+        print(f"Error: Keyword file not found -> {path}")
+        return []
+
+    with open(path, "r", encoding="utf-8") as f:
+        keywords = [
+            line.rstrip('\n').replace("\\n", "\n")
+            for line in f
+            if line.rstrip('\n')
+        ]
+
+    return keywords
+
 
 # Example usage
 if __name__ == "__main__":
     print(pymupdf.__doc__)  # Print the docstring of the pymupdf module to check version and info
     # Define your keywords (supports English, Chinese, and other s)
-    keywords = [  
-        "NTU",
-        "NBS",
-        "Nanyang",
-        "NIE",
-        "RSIS",
-        "Rajaratnam",
-        "NUS",
-        "National",
-        "SMU", 
-        "Management",
-        "Ho Teck Hua",
-        "Tan Eng Chye",
-        "Lily Kong",
-        "Christian Wolfrum",
-        "Aaron Thean",
-        "Alan Chan",
-        "Kuipers", # Ernst J. Kuipers
-        "Liu Bin",
-        "Archan Misra",
-        # Malay keywords
-        "Teknologi",
-        "Nasional",
-        "Pengurusan",     
-        # Chinese keywords
-        "南洋",
-        "南\n洋",
-        "南大",
-        "南\n大",
-        "拉惹",  # RSIS
-        "拉\n惹", # doesn't work
-        "国际",
-        "国\n际",
-        "国立",  # NIE, NUS
-        "国\n立",
-        "国大",
-        "国\n大",
-        "管理",
-        "管\n理",
-        "管大",
-        "管\n大"
-    ]
+    # keywords = [  
+    #     "NTU",
+    #     "NBS",
+    #     "Nanyang",
+    #     "NIE",
+    #     "RSIS",
+    #     "Rajaratnam",
+    #     "NUS",
+    #     "National",
+    #     "SMU", 
+    #     "Management",
+    #     "Ho Teck Hua",
+    #     "Tan Eng Chye",
+    #     "Lily Kong",
+    #     "Christian Wolfrum",
+    #     "Aaron Thean",
+    #     "Alan Chan",
+    #     "Kuipers", # Ernst J. Kuipers
+    #     "Liu Bin",
+    #     "Archan Misra",
+    #     # Malay keywords
+    #     "Teknologi",
+    #     "Nasional",
+    #     "Pengurusan",     
+    #     # Chinese keywords
+    #     "南洋",
+    #     "南\n洋",
+    #     "南大",
+    #     "南\n大",
+    #     "拉惹",  # RSIS
+    #     "拉\n惹", # doesn't work
+    #     "国际",
+    #     "国\n际",
+    #     "国立",  # NIE, NUS
+    #     "国\n立",
+    #     "国大",
+    #     "国\n大",
+    #     "管理",
+    #     "管\n理",
+    #     "管大",
+    #     "管\n大"
+    # ]
     
+    keywords = load_keywords("keywords.txt")
+
     input_folder =  get_input_folder()
     # Define folders
     # Option 1: Relative paths (folders in same directory as script)
-    # input_folder = "input_pdfs"
+    # input_folder = "testing_input_pdfs"
     output_folder = "highlighted_pdfs"
     
     # Option 2: Absolute paths (specify full path to folders)
