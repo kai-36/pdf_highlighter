@@ -186,73 +186,20 @@ def load_keywords(file_path):
 # Example usage
 if __name__ == "__main__":
     print(pymupdf.__doc__)  # Print the docstring of the pymupdf module to check version and info
-    # Define your keywords (supports English, Chinese, and other s)
-    # keywords = [  
-    #     "NTU",
-    #     "NBS",
-    #     "Nanyang",
-    #     "NIE",
-    #     "RSIS",
-    #     "Rajaratnam",
-    #     "NUS",
-    #     "National",
-    #     "SMU", 
-    #     "Management",
-    #     "Ho Teck Hua",
-    #     "Tan Eng Chye",
-    #     "Lily Kong",
-    #     "Christian Wolfrum",
-    #     "Aaron Thean",
-    #     "Alan Chan",
-    #     "Kuipers", # Ernst J. Kuipers
-    #     "Liu Bin",
-    #     "Archan Misra",
-    #     # Malay keywords
-    #     "Teknologi",
-    #     "Nasional",
-    #     "Pengurusan",     
-    #     # Chinese keywords
-    #     "南洋",
-    #     "南\n洋",
-    #     "南大",
-    #     "南\n大",
-    #     "拉惹",  # RSIS
-    #     "拉\n惹", # doesn't work
-    #     "国际",
-    #     "国\n际",
-    #     "国立",  # NIE, NUS
-    #     "国\n立",
-    #     "国大",
-    #     "国\n大",
-    #     "管理",
-    #     "管\n理",
-    #     "管大",
-    #     "管\n大"
-    # ]
     
     keywords = load_keywords("keywords.txt")
 
     input_folder =  get_input_folder()
     # Define folders
-    # Option 1: Relative paths (folders in same directory as script)
     # input_folder = "testing_input_pdfs"
     output_folder = "highlighted_pdfs"
     
-    # Option 2: Absolute paths (specify full path to folders)
-    # input_folder = r"C:\Users\YourName\Documents\PDFs"
-    # output_folder = r"C:\Users\YourName\Documents\Highlighted_PDFs"
-    
-    # Option 3: Use home directory
-    # input_folder = os.path.expanduser("~/Documents/input_pdfs")
-    # output_folder = os.path.expanduser("~/Documents/highlighted_pdfs")
-    
-    # Optional: Change highlight color
+    # Change highlight color
     # Yellow: (1, 1, 0)
     # Green: (0, 1, 0)
     # Blue: (0, 0.5, 1)
     # Pink: (1, 0.75, 0.8)
     highlight_color = (1, 1, 0)  # Yellow
-    
     
     # Process all PDFs
     process_multiple_pdfs(input_folder, output_folder, keywords, highlight_color)
