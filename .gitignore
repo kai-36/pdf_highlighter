@@ -3,3 +3,4 @@ testing.py
 random.py
 *_pdfs/
 data-env/
+*venv
