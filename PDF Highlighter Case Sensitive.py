@@ -199,7 +199,7 @@ if __name__ == "__main__":
     # Green: (0, 1, 0)
     # Blue: (0, 0.5, 1)
     # Pink: (1, 0.75, 0.8)
-    highlight_color = (1, 1, 0)  # Yellow
+    highlight_color = (0, 1, 0) # Blue
     
     # Process all PDFs
     process_multiple_pdfs(input_folder, output_folder, keywords, highlight_color)
