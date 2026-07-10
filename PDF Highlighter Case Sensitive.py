@@ -71,15 +71,17 @@ def highlight_keywords_in_pdf(input_pdf, output_pdf, keywords, highlight_color=(
                 if keyword in word:
 
                     highlight = page.add_highlight_annot(box)
+                    highlight.set_colors(stroke=highlight_color)
+                    highlight.update()
                 
                     if truncated:
                         
                         next_box = boxes[box_no+1]
 
                         highlight = page.add_highlight_annot(next_box)
-
-                    highlight.set_colors(stroke=highlight_color)
-                    highlight.update()
+                        highlight.set_colors(stroke=highlight_color)
+                        highlight.update()
+    
                     total_highlights += 1
             
     # Save the modified PDF
@@ -199,7 +201,7 @@ if __name__ == "__main__":
     # Green: (0, 1, 0)
     # Blue: (0, 0.5, 1)
     # Pink: (1, 0.75, 0.8)
-    highlight_color = (0, 1, 0) # Blue
+    highlight_color = (0, 1, 0) # Green
     
     # Process all PDFs
     process_multiple_pdfs(input_folder, output_folder, keywords, highlight_color)
