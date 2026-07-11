@@ -24,10 +24,12 @@ def highlight_keywords_in_pdf(input_pdf, output_pdf, keywords, highlight_color=(
     truncated = False
     # Iterate through each page
     for page in doc:
+
+        textpage = page.get_textpage()
         
         for keyword in keywords:
 
-            boxes = page.search_for(keyword)
+            boxes = page.search_for(keyword, textpage=textpage)
 
             for box_no, box in enumerate(boxes):
 
