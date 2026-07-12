@@ -1,6 +1,5 @@
 import pymupdf
 import os
-import shutil
 import sys
 from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor
@@ -111,60 +110,6 @@ def highlight_keywords_in_pdf(input_pdf, output_pdf, keywords, highlight_color=(
 
 def is_chinese_char(ch):
     return '\u4e00' <= ch <= '\u9fff'
-
-def process_multiple_pdfs(input_folder, output_folder, keywords, highlight_color=(1, 1, 0)):
-    """
-    Process multiple PDF files in a folder.
-    
-    Args:
-        input_folder: Folder containing input PDF files
-        output_folder: Folder to save highlighted PDFs
-        keywords: List of keywords to highlight
-        highlight_color: RGB tuple (values 0-1)
-    """
-    # Create output folder if it doesn't exist
-    Path(output_folder).mkdir(parents=True, exist_ok=True)
-    
-    # Clear existing files in output folder
-    if os.path.exists(output_folder):
-        for filename in os.listdir(output_folder):
-            file_path = os.path.join(output_folder, filename)
-            try:
-                if os.path.isfile(file_path):
-                    os.remove(file_path)
-                elif os.path.isdir(file_path):
-                    shutil.rmtree(file_path)
-            except Exception as e:
-                print(f"Warning: Could not delete {filename}: {str(e)}")
-        print(f"Cleared existing files in {output_folder}\n")
-    
-    # Get all PDF files in input folder
-    pdf_files = [f for f in os.listdir(input_folder) if f.lower().endswith('.pdf')]
-    
-    if not pdf_files:
-        print(f"No PDF files found in {input_folder}")
-        return
-    
-    print(f"Found {len(pdf_files)} PDF file(s) to process")
-    print(repr(f"Keywords to highlight: {', '.join(keywords)}"))
-    
-    # Process each PDF
-    for pdf_file in pdf_files:
-        input_path = os.path.join(input_folder, pdf_file)
-        output_path = os.path.join(output_folder, pdf_file)  # Save with same name
-        
-        try:
-            highlights = highlight_keywords_in_pdf(
-                input_path, 
-                output_path, 
-                keywords, 
-                highlight_color
-            )
-            print(f"✓ {pdf_file}: {highlights} highlight(s) made")
-        except Exception as e:
-            print(f"✗ {pdf_file}: Error - {str(e)}")
-    
-    print(f"\nProcessing complete! Highlighted PDFs saved to: {output_folder}")
 
 def get_input_folder():
     # 1. Check if user provided an argument
