@@ -3,6 +3,11 @@ import os
 import shutil
 import sys
 from pathlib import Path
+from concurrent.futures import ProcessPoolExecutor
+
+# global variables for worker processes
+_worker_keywords = None
+_worker_color = None
 
 def highlight_keywords_in_pdf(input_pdf, output_pdf, keywords, highlight_color=(1, 1, 0)):
     """
@@ -13,6 +18,9 @@ def highlight_keywords_in_pdf(input_pdf, output_pdf, keywords, highlight_color=(
         output_pdf: Path to save the highlighted PDF
         keywords: List of keywords to highlight
         highlight_color: RGB tuple (values 0-1), default is yellow
+
+    Return:
+        Total number of highlighted keywords
     """
     box_shrink = 3  # Amount to shrink the box to avoid get_textbox from capturing words from adjacent lines
     common_punctuation = "\"',.()[]{}!?;:-"  # Common punctuation to strip from words for matching
@@ -186,6 +194,49 @@ def load_keywords(file_path):
 
     return keywords
 
+def init_worker(keywords, highlight_color):
+    global _worker_keywords, _worker_color
+
+    _worker_keywords, _worker_color = keywords, highlight_color
+
+def extract_tasks(input_folder_path, output_folder_path):
+    # returns the input and output path for each PDF 
+    tasks = []
+
+    input_folders = [f for f in os.listdir(input_folder_path) 
+                    if os.path.isdir(os.path.join(input_folder_path, f))]
+    
+    for folder in input_folders:
+
+        output_subfolder = output_folder_path / folder
+        output_subfolder.mkdir(parents=True, exist_ok=True)
+
+        folder_path = os.path.join(input_folder_path, folder)
+
+        pdf_files = [f for f in os.listdir(folder_path) if f.lower().endswith('.pdf')]
+        
+        for f in pdf_files:
+            input_path = os.path.join(input_folder_path, folder, f)
+            output_path = os.path.join(output_folder_path, folder, f)
+            tasks.append((input_path, output_path))
+
+    return tasks
+
+def process_pdf(args):
+    input_pdf, output_pdf = args
+
+    try:
+        highlights = highlight_keywords_in_pdf(
+            input_pdf, 
+            output_pdf, 
+            _worker_keywords, 
+            _worker_color
+        )
+        return (input_pdf, highlights, None)
+    
+    except Exception as e:
+        return(input_pdf, None, str(e))
+
 
 # Example usage
 if __name__ == "__main__":
@@ -193,18 +244,31 @@ if __name__ == "__main__":
     
     keywords = load_keywords("keywords.txt")
 
-    input_folder =  get_input_folder()
+    input_folder_path = get_input_folder()
     # Define folders
     # input_folder = "testing_input_pdfs"
-    output_folder = "highlighted_pdfs"
-    
+    script_dir = Path(__file__).resolve().parent
+    output_folder_path = script_dir / ("highlighted_" + input_folder_path.name)
+
     # Change highlight color
     # Yellow: (1, 1, 0)
     # Green: (0, 1, 0)
     # Blue: (0, 0.5, 1)
     # Pink: (1, 0.75, 0.8)
     highlight_color = (0, 1, 0) # Green
-    
-    # Process all PDFs
-    process_multiple_pdfs(input_folder, output_folder, keywords, highlight_color)
 
+    tasks = extract_tasks(input_folder_path, output_folder_path)
+    
+    max_workers = max(1, os.cpu_count() - 2)
+    error_count = 0
+
+    with ProcessPoolExecutor(initializer=init_worker, initargs=(keywords, highlight_color), max_workers=max_workers) as executor:
+        for input_pdf, highlights, error in executor.map(process_pdf, tasks):
+            if error:
+                print(f"✗ {input_pdf}: Error - {error}")
+                error_count += 1
+            else:
+                print(f"✓ {input_pdf}: {highlights} highlight(s) made")
+
+    print(f"\nProcessing complete! Highlighted PDFs saved to: {output_folder_path}")
+    print(f"Successfully processed {len(tasks)-error_count}/ {len(tasks)} PDFs" )
