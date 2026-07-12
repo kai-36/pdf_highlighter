@@ -270,14 +270,31 @@ if __name__ == "__main__":
     
     max_workers = max(1, os.cpu_count() - 2)
     error_count = 0
+    problematic_pdfs = []
 
     with ProcessPoolExecutor(initializer=init_worker, initargs=(keywords, highlight_color), max_workers=max_workers) as executor:
         for input_pdf, highlights, error in executor.map(process_pdf, tasks):
+            
             if error:
                 print(f"✗ {input_pdf}: Error - {error}")
                 error_count += 1
+                problematic_pdfs.append((input_pdf, error))
+
+            elif highlights == 0:
+                print(f"✗ {input_pdf}: Error - {highlights} highlight(s) made")
+                error_count += 1
+
+                error = f"{highlights} highlight(s) made"
+                problematic_pdfs.append((input_pdf, error))
+
             else:
                 print(f"✓ {input_pdf}: {highlights} highlight(s) made")
 
     print(f"\nProcessing complete! Highlighted PDFs saved to: {output_folder_path}")
-    print(f"Successfully processed {len(tasks)-error_count}/ {len(tasks)} PDFs" )
+    print(f"Successfully processed {len(tasks)-error_count}/ {len(tasks)} PDFs")
+
+    if problematic_pdfs:
+        print("Problematic PDFs: ")
+
+        for pdf, error in problematic_pdfs:
+            print(f"{pdf}: {error}")
