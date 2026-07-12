@@ -14,7 +14,7 @@ def highlight_keywords_in_pdf(input_pdf, output_pdf, keywords, highlight_color=(
         keywords: List of keywords to highlight
         highlight_color: RGB tuple (values 0-1), default is yellow
     """
-    box_shrink = 3  # Amount to shrink the box to avoid get_textbox from capturing words from adjacent lines
+    shrink_proportion = 0.3  # Amount to shrink the box to avoid get_textbox from capturing words from adjacent lines
     common_punctuation = "\"',.()[]{}!?;:-"  # Common punctuation to strip from words for matching
     # Open the PDF
     doc = pymupdf.open(input_pdf)
@@ -32,11 +32,14 @@ def highlight_keywords_in_pdf(input_pdf, output_pdf, keywords, highlight_color=(
             boxes = page.search_for(keyword, textpage=textpage)
 
             for box_no, box in enumerate(boxes):
-
+            
                 if truncated:
                     truncated = False
                     continue
                 
+                box_height = box[3] - box[1]
+                box_shrink = box_height * shrink_proportion / 2
+
                 shrunk_box = pymupdf.Rect(box[0], box[1]+box_shrink, box[2], box[3]-box_shrink)  
                 word = page.get_textbox(shrunk_box)
 
