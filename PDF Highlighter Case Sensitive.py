@@ -8,13 +8,13 @@ from concurrent.futures import ProcessPoolExecutor
 _worker_keywords = None
 _worker_color = None
 
-def highlight_keywords_in_pdf(input_pdf, output_pdf, keywords, highlight_color=(1, 1, 0)):
+def highlight_keywords_in_pdf(input_pdf_path, output_pdf_path, keywords, highlight_color=(1, 1, 0)):
     """
     Highlights specified keywords in a PDF file with case-sensitive matching.
     
     Args:
-        input_pdf: Path to the input PDF file
-        output_pdf: Path to save the highlighted PDF
+        input_pdf_path: Path to the input PDF file
+        output_pdf_path: Path to save the highlighted PDF
         keywords: List of keywords to highlight
         highlight_color: RGB tuple (values 0-1), default is yellow
 
@@ -24,7 +24,7 @@ def highlight_keywords_in_pdf(input_pdf, output_pdf, keywords, highlight_color=(
     shrink_proportion = 0.3  # Amount to shrink the box to avoid get_textbox from capturing words from adjacent lines
     common_punctuation = "\"',.()[]{}!?;:-"  # Common punctuation to strip from words for matching
     # Open the PDF
-    doc = pymupdf.open(input_pdf)
+    doc = pymupdf.open(input_pdf_path)
     
     # Track total highlights made
     total_highlights = 0
@@ -103,7 +103,7 @@ def highlight_keywords_in_pdf(input_pdf, output_pdf, keywords, highlight_color=(
                     total_highlights += 1
             
     # Save the modified PDF
-    doc.save(output_pdf)
+    doc.save(output_pdf_path)
     doc.close()
     
     return total_highlights
@@ -157,36 +157,38 @@ def extract_tasks(input_folder_path, output_folder_path):
     # returns the input and output path for each PDF 
     tasks = []
 
-    input_folders = [f for f in os.listdir(input_folder_path) 
-                    if os.path.isdir(os.path.join(input_folder_path, f))]
+    input_folders = [f for f in input_folder_path.iterdir() if f.is_dir()]
     
     for folder in input_folders:
 
         output_subfolder = output_folder_path / folder
         output_subfolder.mkdir(parents=True, exist_ok=True)
 
-        folder_path = os.path.join(input_folder_path, folder)
+        # folder_path = os.path.join(input_folder_path, folder)
 
-        pdf_files = [f for f in os.listdir(folder_path) if f.lower().endswith('.pdf')]
+        # pdf_files = [f for f in os.listdir(folder_path) if f.lower().endswith('.pdf')]
+
+        pdf_files = [f for f in folder.iterdir() if f.suffix == ".pdf"]
         
-        for f in pdf_files:
-            input_path = os.path.join(input_folder_path, folder, f)
-            output_path = os.path.join(output_folder_path, folder, f)
-            tasks.append((input_path, output_path))
+        for pdf_file in pdf_files:
+            input_pdf_path = pdf_file
+            output_pdf_path = output_subfolder / pdf_file.name
+            tasks.append((input_pdf_path, output_pdf_path))
 
     return tasks
 
 def process_pdf(args):
-    input_pdf, output_pdf = args
+    input_pdf_path, output_pdf_path = args
 
     try:
         highlights = highlight_keywords_in_pdf(
-            input_pdf, 
-            output_pdf, 
+            input_pdf_path, 
+            output_pdf_path, 
             _worker_keywords, 
             _worker_color
         )
-        return (input_pdf, highlights, None)
+        
+        return (input_pdf_path, highlights, None)
     
     except Exception as e:
         return(input_pdf, None, str(e))
