@@ -25,8 +25,14 @@ def highlight_keywords_in_pdf(input_pdf, output_pdf, keywords, highlight_color=(
     # Iterate through each page
     for page in doc:
 
-        textpage = page.get_textpage()
-        
+        """
+        Page.search_for() internally creates a TextPage everytime it is called. We can reduce execution
+        time by creating the TextPage first and then passing it to Page.search_for() so that it doesn't
+        have to recreate the same TextPage for each keyword
+        """
+
+        textpage = page.get_textpage(flags=pymupdf.TEXTFLAGS_SEARCH)
+
         for keyword in keywords:
 
             boxes = page.search_for(keyword, textpage=textpage)
