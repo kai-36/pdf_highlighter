@@ -192,7 +192,7 @@ def load_keywords(file_path):
 
     if not path.exists():
         print(f"Error: Keyword file not found -> {path}")
-        return []
+        sys.exit(1)
 
     with open(path, "r", encoding="utf-8") as f:
         keywords = [
