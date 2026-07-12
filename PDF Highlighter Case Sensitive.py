@@ -164,10 +164,6 @@ def extract_tasks(input_folder_path, output_folder_path):
         output_subfolder = output_folder_path / folder
         output_subfolder.mkdir(parents=True, exist_ok=True)
 
-        # folder_path = os.path.join(input_folder_path, folder)
-
-        # pdf_files = [f for f in os.listdir(folder_path) if f.lower().endswith('.pdf')]
-
         pdf_files = [f for f in folder.iterdir() if f.suffix == ".pdf"]
         
         for pdf_file in pdf_files:
