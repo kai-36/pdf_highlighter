@@ -1,4 +1,5 @@
 import pymupdf
+import argparse
 import os
 import sys
 from pathlib import Path
@@ -111,6 +112,12 @@ def highlight_keywords_in_pdf(input_pdf_path, output_pdf_path, keywords, highlig
 def is_chinese_char(ch):
     return '\u4e00' <= ch <= '\u9fff'
 
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Highlight keywords across all PDFs in a folder tree.")
+    parser.add_argument("input_folder", help="Path to the folder containing subfolders of PDFs")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Print per-file results")
+    return parser.parse_args()
+
 def get_input_folder():
     # 1. Check if user provided an argument
     if len(sys.argv) != 2:
@@ -196,7 +203,11 @@ if __name__ == "__main__":
     
     keywords = load_keywords("keywords.txt")
 
-    input_folder_path = get_input_folder()
+    args = parse_arguments()
+    
+    input_folder_path = Path(args.input_folder)
+    verbose = args.verbose
+
     # Define folders
     # input_folder = "testing_input_pdfs"
     script_dir = Path(__file__).resolve().parent
@@ -219,25 +230,29 @@ if __name__ == "__main__":
         for input_pdf, highlights, error in executor.map(process_pdf, tasks):
             
             if error:
-                print(f"✗ {input_pdf}: Error - {error}")
+                if verbose:
+                    print(f"✗ {input_pdf}: Error - {error}")
+
                 error_count += 1
                 problematic_pdfs.append((input_pdf, error))
 
             elif highlights == 0:
-                print(f"✗ {input_pdf}: Error - {highlights} highlight(s) made")
+                if verbose:
+                    print(f"✗ {input_pdf}: Error - {highlights} highlight(s) made")
+                    
                 error_count += 1
 
                 error = f"{highlights} highlight(s) made"
                 problematic_pdfs.append((input_pdf, error))
 
-            else:
+            elif verbose:
                 print(f"✓ {input_pdf}: {highlights} highlight(s) made")
 
     print(f"\nProcessing complete! Highlighted PDFs saved to: {output_folder_path}")
-    print(f"Successfully processed {len(tasks)-error_count}/ {len(tasks)} PDFs")
+    print(f"\nSuccessfully processed {len(tasks)-error_count}/ {len(tasks)} PDFs")
 
     if problematic_pdfs:
-        print("Problematic PDFs: ")
+        print("\nProblematic PDFs: ")
 
         for pdf, error in problematic_pdfs:
-            print(f"{pdf}: {error}")
+            print(f"\n{pdf}: {error}")
