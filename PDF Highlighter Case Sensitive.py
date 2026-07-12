@@ -4,6 +4,7 @@ import os
 import sys
 from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor
+from tqdm import tqdm
 
 # global variables for worker processes
 _worker_keywords = None
@@ -227,26 +228,29 @@ if __name__ == "__main__":
     problematic_pdfs = []
 
     with ProcessPoolExecutor(initializer=init_worker, initargs=(keywords, highlight_color), max_workers=max_workers) as executor:
-        for input_pdf, highlights, error in executor.map(process_pdf, tasks):
+
+        results = executor.map(process_pdf, tasks)
+
+        for input_pdf, highlights, error in tqdm(results, total=len(tasks), desc="Highlighting PDFs", unit="pdf"):
             
             if error:
                 if verbose:
-                    print(f"✗ {input_pdf}: Error - {error}")
+                    tqdm.write(f"✗ {input_pdf}: Error - {error}")
 
                 error_count += 1
                 problematic_pdfs.append((input_pdf, error))
 
             elif highlights == 0:
                 if verbose:
-                    print(f"✗ {input_pdf}: Error - {highlights} highlight(s) made")
-                    
+                    tqdm.write(f"✗ {input_pdf}: Error - {highlights} highlight(s) made")
+
                 error_count += 1
 
                 error = f"{highlights} highlight(s) made"
                 problematic_pdfs.append((input_pdf, error))
 
             elif verbose:
-                print(f"✓ {input_pdf}: {highlights} highlight(s) made")
+                tqdm.write(f"✓ {input_pdf}: {highlights} highlight(s) made")
 
     print(f"\nProcessing complete! Highlighted PDFs saved to: {output_folder_path}")
     print(f"\nSuccessfully processed {len(tasks)-error_count}/ {len(tasks)} PDFs")
