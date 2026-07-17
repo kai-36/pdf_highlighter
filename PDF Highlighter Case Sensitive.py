@@ -3,7 +3,7 @@ import argparse
 import os
 import sys
 from pathlib import Path
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from tqdm import tqdm
 
 # global variables for worker processes
@@ -231,9 +231,14 @@ if __name__ == "__main__":
 
     with ProcessPoolExecutor(initializer=init_worker, initargs=(keywords, highlight_color), max_workers=max_workers) as executor:
 
-        results = executor.map(process_pdf, tasks)
+        # results = executor.map(process_pdf, tasks)
 
-        for input_pdf, highlights, error in tqdm(results, total=len(tasks), desc="Highlighting PDFs", unit="pdf"):
+        # for input_pdf, highlights, error in tqdm(results, total=len(tasks), desc="Highlighting PDFs", unit="pdf"):
+
+        futures = [executor.submit(process_pdf, task) for task in tasks]
+
+        for future in tqdm(as_completed(futures), total=len(tasks), desc="Highlighting PDFs", unit="pdf"):
+            input_pdf, highlights, error = future.result()
             
             if error:
                 if verbose:
