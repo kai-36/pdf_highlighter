@@ -169,14 +169,16 @@ def extract_tasks(input_folder_path, output_folder_path):
     
     for folder in input_folders:
 
-        output_subfolder = output_folder_path / folder
+        output_subfolder = output_folder_path / folder.name
         output_subfolder.mkdir(parents=True, exist_ok=True)
 
         pdf_files = [f for f in folder.iterdir() if f.suffix == ".pdf"]
         
         for pdf_file in pdf_files:
+            
             input_pdf_path = pdf_file
             output_pdf_path = output_subfolder / pdf_file.name
+            print(output_pdf_path)
             tasks.append((input_pdf_path, output_pdf_path))
 
     return tasks
@@ -207,6 +209,7 @@ if __name__ == "__main__":
     args = parse_arguments()
     
     input_folder_path = Path(args.input_folder)
+    
     verbose = args.verbose
 
     # Define folders
