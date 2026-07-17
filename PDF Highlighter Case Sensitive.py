@@ -178,7 +178,6 @@ def extract_tasks(input_folder_path, output_folder_path):
             
             input_pdf_path = pdf_file
             output_pdf_path = output_subfolder / pdf_file.name
-            print(output_pdf_path)
             tasks.append((input_pdf_path, output_pdf_path))
 
     return tasks
