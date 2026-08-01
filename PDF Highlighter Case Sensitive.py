@@ -24,7 +24,7 @@ def highlight_keywords_in_pdf(input_pdf_path, output_pdf_path, keywords, highlig
         Total number of highlighted keywords
     """
     shrink_proportion = 0.3  # Amount to shrink the box to avoid get_textbox from capturing words from adjacent lines
-    common_punctuation = "\"',.()[]{}!?;:-"  # Common punctuation to strip from words for matching
+    common_punctuation = "\"',.()[]{}!?;:-" + "，。！？：；（）「」『』、"  # Common punctuation to strip from words for matching
     # Open the PDF
     doc = pymupdf.open(input_pdf_path)
     
