@@ -2,6 +2,7 @@ import pymupdf
 import argparse
 import os
 import sys
+import zipfile
 from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from tqdm import tqdm
@@ -9,6 +10,7 @@ from tqdm import tqdm
 # global variables for worker processes
 _worker_keywords = None
 _worker_color = None
+
 
 def highlight_keywords_in_pdf(input_pdf_path, output_pdf_path, keywords, highlight_color=(1, 1, 0)):
     """
@@ -110,35 +112,125 @@ def highlight_keywords_in_pdf(input_pdf_path, output_pdf_path, keywords, highlig
     
     return total_highlights
 
+
 def is_chinese_char(ch):
     return '\u4e00' <= ch <= '\u9fff'
 
+
+def to_long_path(path):
+    """
+    Prefix a path with \\\\?\\ on Windows so the OS bypasses the legacy
+    260-character MAX_PATH limit when writing extracted files. No-op on
+    non-Windows platforms, since there is no equivalent restriction there.
+    """
+    if os.name != "nt":
+        return str(path)
+
+    path = os.path.abspath(str(path))
+    if not path.startswith("\\\\?\\"):
+        path = "\\\\?\\" + path
+    return path
+
+
+def get_zip_top_level_folder(zip_path):
+    """
+    Inspect a zip file's entries (without extracting) and return the name
+    of its single top-level folder, e.g. "11_Nov_2026" from entries like
+    "11_Nov_2026/251101/some_article.pdf". Raises an error if the zip
+    doesn't have exactly one top-level folder, since the rest of the
+    pipeline assumes a single dated folder per zip.
+    """
+    with zipfile.ZipFile(zip_path, "r") as zf:
+        top_level_names = {Path(name).parts[0] for name in zf.namelist() if name.strip()}
+
+    if len(top_level_names) != 1:
+        raise ValueError(
+            f"Expected exactly one top-level folder in '{zip_path.name}', "
+            f"found {len(top_level_names)}: {sorted(top_level_names)}"
+        )
+
+    return next(iter(top_level_names))
+
+
+def extract_zip(zip_path, dest_folder):
+    """
+    Extract every file in zip_path into dest_folder, writing each file
+    individually (with a long-path prefix on Windows) so paths beyond the
+    260-character MAX_PATH limit don't cause extraction to fail or get
+    silently skipped.
+    """
+    zip_path = Path(zip_path)
+    dest_folder = Path(dest_folder)
+    dest_folder.mkdir(parents=True, exist_ok=True)
+
+    skipped = []
+    extracted_count = 0
+
+    with zipfile.ZipFile(zip_path, "r") as zf:
+        for member in zf.infolist():
+            # member.filename always uses forward slashes, even on Windows;
+            # Path(...) below converts it to the OS-appropriate separator.
+            target_path = dest_folder / Path(member.filename)
+
+            if member.is_dir():
+                os.makedirs(to_long_path(target_path), exist_ok=True)
+                continue
+
+            os.makedirs(to_long_path(target_path.parent), exist_ok=True)
+
+            try:
+                with zf.open(member) as source, open(to_long_path(target_path), "wb") as target:
+                    target.write(source.read())
+                extracted_count += 1
+            except OSError as e:
+                skipped.append((member.filename, str(e)))
+                print(f"✗ Skipped (could not write): {member.filename}\n    {e}")
+
+    print(f"Extracted {extracted_count} file(s) to: {dest_folder}")
+    if skipped:
+        print(f"{len(skipped)} file(s) could not be extracted:")
+        for name, error in skipped:
+            print(f"  {name}: {error}")
+
+    return extracted_count, skipped
+
+
+def resolve_input_folder(input_path):
+    """
+    If input_path is a .zip file, extract it into its own parent directory
+    (so the zip's internal top-level folder, e.g. "11_Nov_2026", becomes
+    the resulting input folder) and return the path to that extracted
+    folder. If input_path is already a directory, return it unchanged.
+    """
+    input_path = Path(input_path)
+
+    if input_path.is_dir():
+        return input_path
+
+    if input_path.is_file() and input_path.suffix.lower() == ".zip":
+        try:
+            top_level_folder = get_zip_top_level_folder(input_path)
+        except ValueError as e:
+            print(f"Error: {e}")
+            sys.exit(1)
+
+        extracted_to = input_path.parent / top_level_folder
+
+        print(f"Extracting '{input_path.name}' -> '{extracted_to}'...")
+        extract_zip(input_path, input_path.parent)
+
+        return extracted_to
+
+    print(f"Error: '{input_path}' is not a valid folder or .zip file.")
+    sys.exit(1)
+
+
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Highlight keywords across all PDFs in a folder tree.")
-    parser.add_argument("input_folder", help="Path to the folder containing subfolders of PDFs")
+    parser.add_argument("input_path", help="Path to a folder of PDFs, or a .zip file to extract first")
     parser.add_argument("-v", "--verbose", action="store_true", help="Print per-file results")
     return parser.parse_args()
 
-def get_input_folder():
-    # 1. Check if user provided an argument
-    if len(sys.argv) != 2:
-        print("Error: Please provide the input folder path.")
-        print("Usage: python script.py <input_folder>")
-        sys.exit(1)
-
-    folder = Path(sys.argv[1])
-
-    # 2. Check if path exists
-    if not folder.exists():
-        print(f"Error: Path does not exist -> {folder}")
-        sys.exit(1)
-
-    # 3. Check if it's a folder
-    if not folder.is_dir():
-        print(f"Error: Path is not a folder -> {folder}")
-        sys.exit(1)
-
-    return folder
 
 def load_keywords(file_path):
     path = Path(file_path)
@@ -156,10 +248,12 @@ def load_keywords(file_path):
 
     return keywords
 
+
 def init_worker(keywords, highlight_color):
     global _worker_keywords, _worker_color
 
     _worker_keywords, _worker_color = keywords, highlight_color
+
 
 def extract_tasks(input_folder_path, output_folder_path):
     # returns the input and output path for each PDF 
@@ -182,6 +276,7 @@ def extract_tasks(input_folder_path, output_folder_path):
 
     return tasks
 
+
 def process_pdf(args):
     input_pdf_path, output_pdf_path = args
 
@@ -196,7 +291,10 @@ def process_pdf(args):
         return (input_pdf_path, highlights, None)
     
     except Exception as e:
-        return(input_pdf, None, str(e))
+        # Bug fix: this used to reference an undefined variable `input_pdf`,
+        # which raised a NameError here and masked whatever the real
+        # exception was.
+        return (input_pdf_path, None, str(e))
 
 
 # Example usage
@@ -206,13 +304,12 @@ if __name__ == "__main__":
     keywords = load_keywords("keywords.txt")
 
     args = parse_arguments()
-    
-    input_folder_path = Path(args.input_folder)
-    
+
+    input_folder_path = resolve_input_folder(args.input_path)
+
     verbose = args.verbose
 
     # Define folders
-    # input_folder = "testing_input_pdfs"
     script_dir = Path(__file__).resolve().parent
     output_folder_path = script_dir / ("highlighted_" + input_folder_path.name)
 
@@ -230,10 +327,6 @@ if __name__ == "__main__":
     problematic_pdfs = []
 
     with ProcessPoolExecutor(initializer=init_worker, initargs=(keywords, highlight_color), max_workers=max_workers) as executor:
-
-        # results = executor.map(process_pdf, tasks)
-
-        # for input_pdf, highlights, error in tqdm(results, total=len(tasks), desc="Highlighting PDFs", unit="pdf"):
 
         futures = [executor.submit(process_pdf, task) for task in tasks]
 
